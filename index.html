@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+    </style>
+    <title>Multi draw</title>
+  </head>
+  <body>
+    <h1>Web desenhos</h1>
+    <canvas id="canvas"></canvas>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+      const socket = io();
+      window.addEventListener("load", function () {
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        let painting = false;
+        function changePosition(event) {
+          painting = !painting;
+          if (painting) draw(event);
+          if (!painting) context?.beginPath();
+        }
+        function draw(event) {
+          if (!painting) return;
+
+          context.lineWidth = 10;
+
+          context.lineCap = "round";
+
+          context?.lineTo(event.clientX, event.clientY);
+          socket.emit("lineTo", {
+            clientX: event.clientX,
+            clientY: event.clientY,
+          });
+          context?.stroke();
+          context?.beginPath();
+          context?.moveTo(event.clientX, event.clientY);
+
+          /*  socket.emit("moveTo", {
+            clientX: event.clientX,
+            clientY: event.clientY,
+          }); */
+        }
+
+        canvas.addEventListener("mousedown", changePosition);
+        canvas.addEventListener("mouseup", changePosition);
+        canvas.addEventListener("mousemove", draw);
+        socket.on("lineTo", ({ clientY, clientX }) => {
+          context?.lineTo(clientX, clientY);
+          context?.stroke();
+          context?.beginPath();
+        });
+        context?.moveTo(event.clientX, event.clientY);
+      });
+    </script>
+  </body>
+</html>
